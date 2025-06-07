@@ -1,10 +1,11 @@
 import os
 import requests
 import pandas as pd
-from datatime import datetime
+from datetime import datetime, timedelta
 
 #API configuration
-API_KEY = os.getenv('API_KEY')
+from config import API_KEY  # Assuming API_KEY is stored in config.py
+#API_KEY = os.getenv('API_KEY')
 API_URL = "https://v3.football.api-sports.io"
 HEADERS = {
     "x-apisports-key": API_KEY
@@ -43,9 +44,19 @@ def save_to_csv(df,path="data/fixtures.csv"):
     
 #main function to fetch, convert and save fixtures
 if __name__ == "__main__":
-    # Example usage
-    today = datetime.today().strftime("%Y-%m-%d")
-    fixtures = fetch_fixtures(today)
-    df = fixture_conversion(fixtures)
+    # Get fixtures from the last 2 months
+    end_date = datetime.today()
+    start_date = end_date - timedelta(days=60)
+
+    all_fixtures = []
+    for i in range(61):
+        day = (start_date + timedelta(days=i)).strftime("%Y-%m-%d")
+        try:
+            daily_fixtures = fetch_fixtures(day)
+            all_fixtures.extend(daily_fixtures)
+        except Exception as e:
+            print(f"Failed to fetch data for {day}: {e}")
+
+    df = fixture_conversion(all_fixtures)
     save_to_csv(df)
-    print(f"Saved {len(df)} fixtures to CSV.")
+    print(f"Saved {len(df)} fixtures from the last 2 months to CSV.")
